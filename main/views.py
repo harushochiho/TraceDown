@@ -10,12 +10,12 @@ def create_item(request):
     return render(request, "create_item.html")
 
 def submit_item(request):
-    print(request.POST)
+    # print(request.POST)
     receipt_obj = Receipt(picture='')
     receipt_obj.save()
-    print(receipt_obj)
+    # print(receipt_obj)
     item_obj, _ = Item.objects.get_or_create(name=request.POST["item"])
-    print(item_obj)
+    # print(item_obj)
     item_obj.save()
     company_obj, _ = Company.objects.get_or_create(company_name=request.POST["company"])
     company_obj.save()
