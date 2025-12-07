@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Item Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box; }
+        input[type="checkbox"] { width: auto; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; }
+    </style>
+</head>
+<body>
+<h1>Add New Item</h1>
+
+{% if message %}<p style="color: green;">{{ message }}</p>{% endif %}
+
+<form method="post" action="{% url 'create_item' %}">
+    {% csrf_token %}
+
+    <label for="id_item">Item</label>
+    <input type="text" id="id_item" name="item" placeholder="Enter item name" required>
+
+    <label for="id_price">Price</label>
+    <input type="number" id="id_price" name="price" step="0.01" min="0" placeholder="0.00" required>
+
+    <label for="id_quantity">Quantity</label>
+    <input type="number" id="id_quantity" name="quantity" min="0" placeholder="0" required>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="id_tax" name="tax">
+        <label for="id_tax">Tax?</label>
+    </div>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="id_onsale" name="onsale">
+        <label for="id_onsale">On Sale?</label>
+    </div>
+
+    <label for="id_category">Category</label>
+    <input type="text" id="id_category" name="category" placeholder="e.g., Electronics">
+
+    <label for="id_company">Company</label>
+    <input type="text" id="id_company" name="company" placeholder="e.g., Acme Corp">
+
+    <label for="id_remarks">Remarks</label>
+    <textarea id="id_remarks" name="remarks" rows="4" placeholder="Additional notes..."></textarea>
+
+    <button type="submit">Submit Item</button>
+</form>
+</body>
+</html>
