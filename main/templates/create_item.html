@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-us">
 <head>
     <title>Item Form</title>
     <style>
@@ -16,7 +16,7 @@
 
 {% if message %}<p style="color: green;">{{ message }}</p>{% endif %}
 
-<form method="post" action="{% url 'create_item' %}">
+<form method="post" action="{% url 'submit_item' %}">
     {% csrf_token %}
 
     <label for="id_item">Item</label>
@@ -46,7 +46,7 @@
 
     <label for="id_remarks">Remarks</label>
     <textarea id="id_remarks" name="remarks" rows="4" placeholder="Additional notes..."></textarea>
-
+    
     <button type="submit">Submit Item</button>
 </form>
 </body>

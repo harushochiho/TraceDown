@@ -19,7 +19,6 @@ class ItemList(models.Model):
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, related_name='item_list', null=True)
     remarks = models.TextField(max_length=500)
     receipt = models.ForeignKey(Receipt, on_delete=models.SET_NULL, related_name='item_list', null=True)
-    shopping_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
