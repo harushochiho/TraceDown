@@ -16,9 +16,12 @@
 
 {% if message %}<p style="color: green;">{{ message }}</p>{% endif %}
 
-<form method="post" action="{% url 'submit_item' %}">
+<form method="post" action="{% url 'submit_item' %}" enctype="multipart/form-data">
     {% csrf_token %}
 
+    <label for="id_receipt">Receipt Name</label>
+    <input type="text" id="id_receipt" name="receipt" placeholder="Enter unique receipt name" required>
+    
     <label for="id_item">Item</label>
     <input type="text" id="id_item" name="item" placeholder="Enter item name" required>
 
@@ -46,6 +49,9 @@
 
     <label for="id_remarks">Remarks</label>
     <textarea id="id_remarks" name="remarks" rows="4" placeholder="Additional notes..."></textarea>
+    
+    <label for="id_picture">Picture</label>
+    <input type="file" accept="image/*" id="id_picture" name="picture" placeholder="Add the photo of your receipt">
     
     <button type="submit">Submit Item</button>
 </form>
