@@ -12,9 +12,11 @@ def create_item(request):
 
 def submit_item(request):
     # Create a new object and save to the table "receipt"
-    image_file = request.FILES['picture']
-    filename = default_storage.save(f'receipts/{image_file.name}', image_file)
-    receipt_obj = Receipt(picture=filename, name=request.POST["receipt"])
+    receipt_obj, _ = Receipt.objects.get_or_create(name=request.POST["receipt"])
+    if request.FILES:
+        image_file = request.FILES['picture']
+        filename = default_storage.save(f'receipts/{image_file.name}', image_file)
+        receipt_obj.picture = filename
     receipt_obj.save()
 
     # Check if the item name exists
@@ -38,8 +40,8 @@ def submit_item(request):
     if not category_exists:
         category_obj.save()
 
-    is_taxed = Tax.objects.get(id='tax' in request.POST if 0 else 1)
-    is_on_sale = OnSale.objects.get(id='onsale' in request.POST if 0 else 1)
+    is_taxed = Tax.objects.get(is_taxed='tax' in request.POST if 1 else 0)
+    is_on_sale = OnSale.objects.get(is_on_sale='onsale' in request.POST if 1 else 0)
 
     item_list = ItemList(
         item=item_obj,
