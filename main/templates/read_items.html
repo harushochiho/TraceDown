@@ -27,6 +27,35 @@
         tbody tr:nth-child(even) {
             background-color: #fafafa;
         }
+
+        .edit-button, .delete-button {
+            padding: 6px 12px;
+            margin-right: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .edit-button {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .edit-button:hover {
+            background-color: #218838;
+        }
+
+        .delete-button {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .delete-button:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -66,6 +95,23 @@
                 <td>{{ item_list.shopping_date }}</td>
                 <td><img src="/media/{{ item_list.picture }}" alt="{{ item_list.name }}" width="100" height="100"></td>
                 <td>
+                    <button type="button" class="edit-button" 
+                            data-item-id="{{ item.id }}"
+                            data-receipt-id="{{ receipt_id }}"
+                            data-item-name="{{ item.name }}"
+                            data-price="{{ item.price }}"
+                            data-quantity="{{ item.quantity }}"
+                            data-tax="{{ item.tax }}"
+                            data-on-sale="{{ item.on_sale }}"
+                            data-category="{{ item.category_name }}"
+                            data-company="{{ item.company_name }}"
+                            data-remarks="{{ item.remarks }}"
+                            data-receipt-name="{{ item_list.name }}"
+                            data-shopping-date="{{ item_list.shopping_date|date:'Y-m-d' }}"
+                            data-picture="{{ item_list.picture }}"
+                            onclick="handleEditClick(this)">
+                        Edit
+                    </button>
                     <form method="post" action="{% url 'delete_item' item_id=item.id %}" style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" class="delete-button"
@@ -87,5 +133,87 @@
         </tbody>
     </table>
 {% endfor %}
+
+<!-- Include the edit item modal -->
+{% include 'edit_item.html' %}
+
+<script>
+    function handleEditClick(button) {
+        // Extract data attributes from button
+        const itemData = {
+            item_id: button.dataset.itemId,
+            receipt_id: button.dataset.receiptId,
+            item_name: button.dataset.itemName,
+            price: button.dataset.price,
+            quantity: button.dataset.quantity,
+            tax: button.dataset.tax === 'True' || button.dataset.tax === 'true',
+            on_sale: button.dataset.onSale === 'True' || button.dataset.onSale === 'true',
+            category_name: button.dataset.category,
+            company_name: button.dataset.company,
+            remarks: button.dataset.remarks,
+            receipt_name: button.dataset.receiptName,
+            shopping_date: button.dataset.shoppingDate,
+            picture: button.dataset.picture
+        };
+        
+        // Call openEditModal with the data
+        openEditModal(itemData.item_id, itemData.receipt_id, itemData);
+    }
+
+    function openEditModal(itemId, receiptId, itemData) {
+        const modal = document.querySelector('.edit-item-modal');
+        if (modal) {
+            // Populate receipt information
+            document.getElementById('id_receipt_name').value = itemData.receipt_name || '';
+            document.getElementById('id_shopping_date').value = itemData.shopping_date || '';
+            
+            // Populate receipt picture preview
+            const picturePreview = document.getElementById('picturePreview');
+            if (itemData.picture) {
+                picturePreview.innerHTML = `<img src="/media/${itemData.picture}" alt="Receipt picture" width="150" height="150">`;
+            } else {
+                picturePreview.innerHTML = '<p>No picture uploaded</p>';
+            }
+            
+            // Populate item information
+            document.getElementById('id_item_name').value = itemData.item_name || '';
+            document.getElementById('id_price').value = itemData.price || '';
+            document.getElementById('id_quantity').value = itemData.quantity || '';
+            document.getElementById('id_tax').checked = itemData.tax === true || itemData.tax === 'True' || itemData.tax === 'true';
+            document.getElementById('id_onsale').checked = itemData.on_sale === true || itemData.on_sale === 'True' || itemData.on_sale === 'true';
+            document.getElementById('id_category').value = itemData.category_name || '';
+            document.getElementById('id_company').value = itemData.company_name || '';
+            document.getElementById('id_remarks').value = itemData.remarks || '';
+            
+            // Store item ID in hidden field
+            document.getElementById('id_item_id').value = itemId;
+            
+            // Update form action with correct item ID
+            const form = document.getElementById('editItemForm');
+            form.action = `/update_item/${itemId}/`;
+            
+            // Display modal
+            modal.style.display = 'block';
+            console.log('Edit modal opened for item:', itemId, 'with data:', itemData);
+        }
+    }
+
+    function closeEditModal() {
+        const modal = document.querySelector('.edit-item-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        const modal = document.querySelector('.edit-item-modal');
+        if (modal && event.target === modal) {
+            closeEditModal();
+        }
+    }
+</script>
 </body>
 </html>
+
+

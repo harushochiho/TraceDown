@@ -1,0 +1,406 @@
+<!-- Edit Item Partial View -->
+<div class="edit-item-modal" id="editItemModal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeEditModal()">&times;</span>
+        <h2>Edit Item</h2>
+
+        <div id="alertContainer"></div>
+
+        <form method="post" id="editItemForm" class="edit-item-form" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Receipt Information Section -->
+            <fieldset>
+                <legend>Receipt Information</legend>
+                
+                <div class="form-group">
+                    <label for="id_receipt_name">Receipt Name</label>
+                    <input type="text" id="id_receipt_name" name="receipt_name" required readonly>
+                    <small>Receipt name cannot be changed</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_shopping_date">Shopping Date</label>
+                    <input type="date" id="id_shopping_date" name="shopping_date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_picture">Receipt Picture</label>
+                    <div class="picture-preview" id="picturePreview">
+                        <p>No picture uploaded</p>
+                    </div>
+                    <input type="file" accept="image/*" id="id_picture" name="picture">
+                    <small>Upload a new picture to replace the current one</small>
+                </div>
+            </fieldset>
+
+            <!-- Item Information Section -->
+            <fieldset>
+                <legend>Item Details</legend>
+
+                <div class="form-group">
+                    <label for="id_item_name">Item Name *</label>
+                    <input type="text" id="id_item_name" name="item_name" placeholder="Enter item name" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_price">Price *</label>
+                        <input type="number" id="id_price" name="price" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_quantity">Quantity *</label>
+                        <input type="number" id="id_quantity" name="quantity" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="id_tax" name="tax">
+                        <label for="id_tax">Tax Applied</label>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="id_onsale" name="onsale">
+                        <label for="id_onsale">On Sale</label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_category">Category</label>
+                        <input type="text" id="id_category" name="category" placeholder="e.g., Electronics">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_company">Company</label>
+                        <input type="text" id="id_company" name="company" placeholder="e.g., Acme Corp">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_remarks">Remarks</label>
+                    <textarea id="id_remarks" name="remarks" rows="4" placeholder="Additional notes..."></textarea>
+                </div>
+                
+                <!-- Hidden field to store item ID -->
+                <input type="hidden" id="id_item_id" name="item_id">
+            </fieldset>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .edit-item-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        overflow: auto;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 30px;
+        border: 1px solid #888;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 700px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close-button:hover,
+    .close-button:focus {
+        color: black;
+    }
+
+    h2 {
+        color: #333;
+        margin-top: 0;
+    }
+
+    fieldset {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    legend {
+        font-weight: bold;
+        color: #555;
+        padding: 0 10px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="file"],
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    input[type="file"]:focus,
+    textarea:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+    }
+
+    input[type="text"][readonly] {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+    }
+
+    textarea {
+        resize: vertical;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+    }
+
+    .checkbox-group label {
+        margin-bottom: 0;
+        cursor: pointer;
+    }
+
+    .picture-preview {
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .picture-preview img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+    }
+
+    .picture-preview p {
+        margin: 0;
+        color: #999;
+    }
+
+    small {
+        display: block;
+        color: #666;
+        font-size: 12px;
+        margin-top: 3px;
+    }
+
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+
+    .alert-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+    }
+
+    .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+
+    @media (max-width: 600px) {
+        .modal-content {
+            width: 95%;
+            margin: 20% auto;
+            padding: 20px;
+        }
+
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    // Store current item data globally
+    let currentItemData = null;
+
+    function closeEditModal() {
+        const modal = document.getElementById('editItemModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // This function is called from read_items.html
+    function openEditModal(itemId, receiptId, itemData) {
+        const modal = document.getElementById('editItemModal');
+        if (modal) {
+            // Store the current item data
+            currentItemData = itemData;
+            
+            // Populate form fields with item data
+            populateForm(itemData);
+            
+            // Update form action with correct item ID using Django URL pattern
+            const form = document.getElementById('editItemForm');
+            form.action = `/update_item/${itemId}/`; // Adjusted to match Django URL pattern
+            
+            // Store item ID in hidden field
+            document.getElementById('id_item_id').value = itemId;
+            
+            modal.style.display = 'block';
+            console.log('Edit modal opened for item:', itemId);
+        }
+    }
+
+    function populateForm(itemData) {
+        // Populate receipt information
+        document.getElementById('id_receipt_name').value = itemData.receipt_name || '';
+        document.getElementById('id_shopping_date').value = itemData.shopping_date || '';
+        
+        // Populate receipt picture if exists
+        const picturePreview = document.getElementById('picturePreview');
+        if (itemData.picture) {
+            picturePreview.innerHTML = `<img src="/media/${itemData.picture}" alt="Receipt picture" width="150" height="150">`;
+        } else {
+            picturePreview.innerHTML = '<p>No picture uploaded</p>';
+        }
+        
+        // Populate item information
+        document.getElementById('id_item_name').value = itemData.item_name || '';
+        document.getElementById('id_price').value = itemData.price || '';
+        document.getElementById('id_quantity').value = itemData.quantity || '';
+        document.getElementById('id_tax').checked = itemData.tax || false;
+        document.getElementById('id_onsale').checked = itemData.on_sale || false;
+        document.getElementById('id_category').value = itemData.category_name || '';
+        document.getElementById('id_company').value = itemData.company_name || '';
+        document.getElementById('id_remarks').value = itemData.remarks || '';
+    }
+
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        const modal = document.getElementById('editItemModal');
+        if (modal && event.target === modal) {
+            closeEditModal();
+        }
+    }
+
+    // Handle form submission
+    document.getElementById('editItemForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Form will be submitted to the action URL specified
+        this.submit();
+    });
+
+    // Prevent form submission on Enter for text inputs (optional)
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"]').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && this.id !== 'id_remarks') {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>

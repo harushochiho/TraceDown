@@ -34,8 +34,8 @@ def retrieval(request):
                                                                                      on_sale=F(
                                                                                          "item_list__is_on_sale__is_on_sale")).order_by(
         "-id").values(
-        "id", "name", "item_list_id", "shopping_date", "item_name", "item_list__price", "item_list__quantity",
-        "item_list__remarks", "company_name", "category_name", "tax",
+        "id", "name", "item_list_id", "shopping_date", "item_name", "price", "quantity",
+        "remarks", "company_name", "category_name", "tax",
         "on_sale", "picture")
     receipts_grouped = {}
 
@@ -60,7 +60,7 @@ def retrieval(request):
         new_item["category_name"] = item_receipt.get("category_name")
         new_item["tax"] = item_receipt.get("tax")
         new_item["on_sale"] = item_receipt.get("on_sale")
-
+        print(f"price: {item_receipt}, quantity: {new_item['quantity']}")
         receipts_grouped[item_receipt.get("id")]["items"].append(new_item)
 
     return render(request, "read_items.html", {"receipts": receipts_grouped})
