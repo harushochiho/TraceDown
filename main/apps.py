@@ -19,10 +19,6 @@ def seeding_data():
     
 class MainConfig(AppConfig):
     name = 'main'
-    _seeding = True
-    
+
     def ready(self):
-        print('Going to seed data')
-        if MainConfig._seeding:
-            seeding_data()
-            MainConfig._seeding = False
+        print('Ready')
