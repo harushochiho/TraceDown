@@ -1,0 +1,7 @@
+﻿services:
+  ai_imageracognition:
+    image: ai_imageracognition
+    build:
+      context: .
+      dockerfile: AI_ImageRacognition/Dockerfile
+

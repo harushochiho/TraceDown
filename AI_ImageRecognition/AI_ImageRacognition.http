@@ -1,0 +1,6 @@
+@AI_ImageRacognition_HostAddress = http://localhost:8080
+
+GET {{AI_ImageRacognition_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
