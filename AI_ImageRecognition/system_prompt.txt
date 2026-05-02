@@ -16,8 +16,9 @@ Then, always output numbers in the JSON using a period as the decimal separator.
 For example: 7499.00, not 7.499,00 or 7,499.00.
     
 
-Only if there is an alphabet 'H' next to the price, like 4.99H, then the item is taxable.
-Only if there is '<ON SALE>' near an item name, the item is on sale. The words '<ON SALE>' should be removed from the item name; for example: White Potatoes (白薯仔) <ON SALE> becomes White Potatoes (白薯仔).
+When price is like '4.99H', meaning the item is taxable. Otherwise, the item is not taxable.
+'White Potatoes (白薯仔) <ON SALE>' means the item White Potatoes (白薯仔) is on sale.
+While extracting the item name, make sure not to include the words '<ON SALE>'.
 '0.58 lb @ $1.29/lb' means the quantity of this item is 0.58 lb and its unit price is 1.29 per lb.
 The item name under English item name is the Chinese item name.
     
