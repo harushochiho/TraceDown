@@ -1,0 +1,1 @@
+﻿Extract all line items from this receipt. Convert the document to markdown.

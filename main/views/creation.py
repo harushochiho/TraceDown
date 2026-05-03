@@ -1,9 +1,12 @@
+import json
 from decimal import Decimal
 
 from django.core.files.storage import default_storage
+from django.http import JsonResponse
 from django.shortcuts import render
 
 from main.models import Receipt, Item, ItemList, Company, Category, Tax, OnSale
+from main.ollama.image_recognition import image_recognition
 
 
 # Create your views here.
@@ -56,3 +59,11 @@ def submit_item(request):
     )
     item_list.save()
     return render(request, "create_item.html")
+
+def image_upload(request):
+    return render(request, "image_upload.html")
+
+def image_recognition_req(request):
+    print(request.FILES)
+    file = request.FILES['picture']
+    return JsonResponse(json.loads(image_recognition(file).message.content))
