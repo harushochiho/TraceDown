@@ -66,4 +66,47 @@ def image_upload(request):
 def image_recognition_req(request):
     print(request.FILES)
     file = request.FILES['picture']
-    return JsonResponse(json.loads(image_recognition(file).message.content))
+    data = json.loads(image_recognition(file).message.content)
+    save_receipt_from_json(data, request)
+    return JsonResponse(data)
+
+def save_receipt_from_json(data, request):
+    # Create a new object and save to the table "receipt"
+    receipt_obj, _ = Receipt.objects.get_or_create(name=data['CompanyName'])
+    if request.FILES:
+        image_file = request.FILES['picture']
+        filename = default_storage.save(f'receipts/{image_file.name}', image_file)
+        receipt_obj.picture = filename
+    receipt_obj.save()
+
+    # Check if the company name exists
+    # True: use existing company name
+    # False: create a new one and save to the table "company"
+    company_obj, _ = Company.objects.get_or_create(company_name=data['CompanyName'])
+
+    for item in data['items']:
+        # Check if the item name exists
+        # True: use existing item name
+        # False: create a new one and save to the table "item"
+        item_obj, _ = Item.objects.get_or_create(name=item['name'])
+
+        # Check if the category name exists
+        # True: use existing category name
+        # False: create a new one and save to the table "category"
+        category_obj, _ = Category.objects.get_or_create(name=item['Category'])
+
+        is_taxed = Tax.objects.get(is_taxed=item['Taxable'])
+        is_on_sale = OnSale.objects.get(is_on_sale=item['OnSale'])
+
+        item_list = ItemList(
+            item=item_obj,
+            price=Decimal(item['totalPrice']),
+            quantity=Decimal(item['quantity']),
+            category=category_obj,
+            company=company_obj,
+            is_taxed=is_taxed,
+            is_on_sale=is_on_sale,
+            remarks='',
+            receipt=receipt_obj,
+        )
+        item_list.save()
