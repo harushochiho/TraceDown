@@ -1,5 +1,8 @@
 import base64
+from datetime import tzinfo
 from pathlib import Path
+from time import tzname
+from zoneinfo import ZoneInfo
 
 import httpx
 import ollama
@@ -14,7 +17,9 @@ def image_recognition(image):
     deepseek_prompt = ""
     llama_prompt = ""
     system_message = ""
-
+    
+    timezone.activate(ZoneInfo("America/Toronto"))
+    
     with open(f"{file_path}\\deepseek_prompt.txt", "r", encoding="utf-8") as file:
         deepseek_prompt = file.read()
 
