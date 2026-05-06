@@ -23,3 +23,6 @@
 **/values.dev.yaml
 LICENSE
 README.md
+*.jpg
+/AI_ImageRecognition/llama_response.txt
+/AI_ImageRecognition/deepseek_response.txt

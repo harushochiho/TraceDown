@@ -2,4 +2,5 @@ bin/
 obj/
 /packages/
 riderModule.iml
-/_ReSharper.Caches/
+/AI_ImageRecognition/llama_response.txt
+/AI_ImageRecognition/deepseek_response.txt

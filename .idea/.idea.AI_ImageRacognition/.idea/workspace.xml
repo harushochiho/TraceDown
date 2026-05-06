@@ -16,12 +16,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="11ec1f3f-9f2a-40eb-8648-6e9518e35e4e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/AI_ImageRecognition/deepseek_response.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/AI_ImageRecognition/llama_response.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.AI_ImageRacognition/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.AI_ImageRacognition/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AI_ImageRecognition/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/AI_ImageRecognition/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AI_ImageRecognition/llama_prompt.txt" beforeDir="false" afterPath="$PROJECT_DIR$/AI_ImageRecognition/llama_prompt.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AI_ImageRecognition/system_prompt.txt" beforeDir="false" afterPath="$PROJECT_DIR$/AI_ImageRecognition/system_prompt.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -197,7 +192,7 @@
       <workItem from="1775949372873" duration="5066000" />
       <workItem from="1775959637324" duration="921000" />
       <workItem from="1777173716807" duration="288000" />
-      <workItem from="1777735435424" duration="22963000" />
+      <workItem from="1777735435424" duration="24548000" />
     </task>
     <servers />
   </component>
