@@ -56,3 +56,39 @@ def image_recognition(image):
     llama_client.close()
 
     return llama_response
+
+
+def call_api_localhost_8801(image):
+    deepseek_prompt = ""
+    llama_prompt = ""
+    system_message = ""
+    with open(f"{file_path}\\deepseek_prompt.txt", "r", encoding="utf-8") as file:
+        deepseek_prompt = file.read()
+
+    with open(f"{file_path}\\llama_prompt.txt", "r", encoding="utf-8") as file:
+        llama_prompt = file.read()
+
+    with open(f"{file_path}\\system_prompt.txt", "r", encoding="utf-8") as file:
+        system_message = file.read()
+    with httpx.Client(timeout=httpx.Timeout(900.0)) as client:
+        image.seek(0)
+        image_data = base64.b64encode(image.read()).decode('utf-8')
+        media_type = getattr(image, 'content_type', 'image/png')
+        messages = {
+            "ModelName": "deepseek-ocr:latest",
+            "Prompts": [
+                {
+                    "Role": "User",
+                    "DefaultPrompt": "",
+                    "Contents": [],
+                    "Images": [
+                        {
+                            "ImageData": image_data,
+                            "MediaType": media_type
+                        }
+                    ]
+                }
+            ]
+        }
+        response = client.post("http://localhost:8801/", json=messages)
+        return response
