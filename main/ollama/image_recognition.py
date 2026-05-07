@@ -12,20 +12,25 @@ from ollama import ChatResponse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 file_path = BASE_DIR / "docs"
-timezone.activate(ZoneInfo("America/Toronto"))
+
 deepseek_prompt = ""
 llama_prompt = ""
 system_message = ""
 with open(f"{file_path}\\deepseek_prompt.txt", "r", encoding="utf-8") as file:
+    print("Reading deepseek_prompt.txt")
     deepseek_prompt = file.read()
 
 with open(f"{file_path}\\llama_prompt.txt", "r", encoding="utf-8") as file:
+    print("Reading llama_prompt.txt")
     llama_prompt = file.read()
 
 with open(f"{file_path}\\system_prompt.txt", "r", encoding="utf-8") as file:
+    print("Reading system_prompt.txt")
     system_message = file.read()
 
+
 def image_recognition(image):
+    timezone.activate(ZoneInfo("America/Toronto"))
     ollama_client = ollama.Client("http://localhost:8833/", timeout=httpx.Timeout(900.0))
 
     # Call the DeepSeek API to get the image description
@@ -41,9 +46,10 @@ def image_recognition(image):
 
     llama_client = ollama.Client("http://localhost:8833/", timeout=httpx.Timeout(900.0))
 
-    llama_prompt_messages = [{'role': 'system', 'content': system_message}, {'role': 'user', 'content': llama_prompt},
+    llama_prompt_messages = [{'role': 'user', 'content': system_message},
                              {'role': 'assistant', 'content': deepseek_response.message.content,
-                              'images': [image_encoded]}]
+                              'images': [image_encoded]},
+                             {'role': 'user', 'content': f"{llama_prompt}"}]
     llama_response: ChatResponse = llama_client.chat(model='llama3.2-vision:latest', messages=llama_prompt_messages)
 
     with open(f"{file_path}\\llama_response.txt", "a", encoding="utf-8") as file:
@@ -56,6 +62,7 @@ def image_recognition(image):
 
 
 def call_api_localhost(image):
+    timezone.activate(ZoneInfo("America/Toronto"))
     image_data = base64.b64encode(image.read()).decode('utf-8')
     media_type = getattr(image, 'content_type', 'image/png')
     messages = {
@@ -75,12 +82,14 @@ def call_api_localhost(image):
         ]
     }
     with open(f"{file_path}\\api_calling.txt", "a", encoding="utf-8") as file:
-        file.write(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")}-{json.dumps(messages, ensure_ascii=False, indent=4)}\n")
-        
-    response = httpx.post("https://localhost:8802/aicalling", json=messages, verify=False, timeout=Timeout(timeout=None))
+        file.write(
+            f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")}-{json.dumps(messages, ensure_ascii=False, indent=4)}\n")
+
+    response = httpx.post("https://localhost:8802/aicalling", json=messages, verify=False,
+                          timeout=Timeout(timeout=None))
 
     with open(f"{file_path}\\deepseek_response.txt", "a", encoding="utf-8") as file:
         print(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")} Logging deepseek_response.txt")
         file.write(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")}-{json.dumps(response.json())}\n")
-    
+
     return response

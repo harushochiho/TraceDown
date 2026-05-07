@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 
 from django.core.files.storage import default_storage
@@ -65,10 +66,10 @@ def image_upload(request):
 def image_recognition_req(request):
     print(request.FILES)
     file = request.FILES['picture']
-    #data = json.loads(image_recognition(file).message.content)
-    #save_receipt_from_json(data, request)
-    data = call_api_localhost(file)
-    return JsonResponse(data.json())
+    data = json.loads(image_recognition(file).message.content)
+    save_receipt_from_json(data, request)
+    # data = call_api_localhost(file)
+    return JsonResponse(data)
 
 def save_receipt_from_json(data, request):
     # Create a new object and save to the table "receipt"
