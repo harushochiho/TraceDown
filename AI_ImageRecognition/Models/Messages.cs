@@ -1,4 +1,4 @@
-﻿using AI_ImageRacognition.Utilities;
+using AI_ImageRacognition.Utilities;
 using Microsoft.Extensions.AI;
 
 namespace AI_ImageRacognition.Models;
