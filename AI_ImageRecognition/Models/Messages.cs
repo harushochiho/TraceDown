@@ -3,27 +3,13 @@ using Microsoft.Extensions.AI;
 
 namespace AI_ImageRacognition.Models;
 
-public record Messages
-{
-    public string           ModelName = string.Empty;
-    public List<ChatPrompt> Prompts   = [];
-}
+public record Messages(string ModelName,
+                       List<ChatPrompt> Prompts);
 
-public record ChatPrompt
-{
-    public ChatRole Role;
+public record ChatPrompt(ChatRole Role,
+                         string DefaultPrompt,
+                         List<string>? Contents,
+                         List<Image>? Images);
 
-    public string DefaultPrompt = string.Empty;
-    
-    public List<string> Contents = [];
-
-    public List<Image> Images = [];
-    
-}
-
-public record Image
-{
-    public string ImageData = string.Empty;
-
-    public string MediaType = "image/png";
-}
+public record Image(string ImageData,
+                    string MediaType);

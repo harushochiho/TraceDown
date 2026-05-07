@@ -1,4 +1,7 @@
 ﻿services:
+  ollama:
+    image: ollama/ollama
+
   ai_imageracognition:
     image: ai_imageracognition
     build:

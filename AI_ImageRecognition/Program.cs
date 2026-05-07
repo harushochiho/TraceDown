@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AI_ImageRacognition;
 using AI_ImageRacognition.Models;
-using AI_ImageRacognition.Utilities;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.AI;
 using OllamaSharp;
 
@@ -18,12 +18,21 @@ builder.Services.AddKeyedChatClient("deepseek",
 builder.Services.AddKeyedChatClient("llama",
                                     new OllamaApiClient(new HttpClient { BaseAddress = new Uri("http://localhost:8833/"), Timeout = Timeout.InfiniteTimeSpan },
                                                         "llama3.2-vision:latest"));
+builder.Services.AddKeyedChatClient("deepseek-ocr:latest",
+                                    new OllamaApiClient(new HttpClient { BaseAddress = new Uri("http://localhost:8833/"), Timeout = Timeout.InfiniteTimeSpan },
+                                                        "deepseek-ocr:latest"));
+builder.Services.AddKeyedChatClient("llama3.2-vision:latest",
+                                    new OllamaApiClient(new HttpClient { BaseAddress = new Uri("http://localhost:8833/"), Timeout = Timeout.InfiniteTimeSpan },
+                                                        "llama3.2-vision:latest"));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    // var client = new OllamaApiClient(new HttpClient { BaseAddress = new Uri("http://localhost:8833/"), Timeout = Timeout.InfiniteTimeSpan });
+    // client.PullModelAsync("deepseek-ocr:latest");
+    // client.PullModelAsync("llama3.2-vision:latest");
 }
 
 app.UseHttpsRedirection();
@@ -33,6 +42,12 @@ app.MapGet("/aicalling",
            {
                var deepseekChatClient = app.Services.GetKeyedService<IChatClient>("deepseek");
                var llamaChatClient = app.Services.GetKeyedService<IChatClient>("llama");
+               
+               if (deepseekChatClient == null || llamaChatClient == null)
+               {
+                   throw new InvalidOperationException("required Chat clients are not configured. Please ensure Ollama is running at http://localhost:8833/");
+               }
+
                var deepseekPrompt = File.ReadAllText("deepseek_prompt.txt",
                                                      Encoding.UTF8);
                var llamaPrompt = File.ReadAllText("llama_prompt.txt",
@@ -75,33 +90,45 @@ app.MapGet("/aicalling",
    .WithName("AI Calling");
 
 app.MapPost("/aicalling",
-            async (Messages messages) =>
+            async ([FromBody] Messages messages) =>
             {
                 var ollamaChatClient = app.Services.GetKeyedService<IChatClient>(messages.ModelName);
-                List<ChatMessage> chatMessages = new ();
+
+                if (ollamaChatClient == null)
+                {
+                    return JsonSerializer.Serialize($"failed to initialize ollama chat client - {messages.ModelName}");
+                }
+                
+                List<ChatMessage> chatMessages = new();
 
                 foreach (var prompt in messages.Prompts)
                 {
                     ChatMessage chatMessage = new ChatMessage(prompt.Role,
                                                               prompt.DefaultPrompt);
 
-                    foreach (string promptContent in prompt.Contents)
+                    if (prompt.Contents != null)
                     {
-                        chatMessage.Contents.Add(new TextContent(promptContent));
+                        foreach (string promptContent in prompt.Contents)
+                        {
+                            chatMessage.Contents.Add(new TextContent(promptContent));
+                        }
                     }
 
-                    foreach (Image image in prompt.Images)
+                    if (prompt.Images != null)
                     {
-                        chatMessage.Contents.Add(new DataContent(image.ImageData,
-                                                                 image.MediaType));
+                        foreach (Image image in prompt.Images)
+                        {
+                            chatMessage.Contents.Add(new DataContent(Convert.FromBase64String(image.ImageData),
+                                                                     image.MediaType));
+                        }
                     }
+
 
                     chatMessages.Add(chatMessage);
                 }
+                var ollamaResponse = await ollamaChatClient.GetResponseAsync<Receipt>(chatMessages,
+                                                                                      new ChatOptions { Temperature = 0 });
 
-                var ollamaResponse = ollamaChatClient.GetResponseAsync<Receipt>(chatMessages,
-                                                                                 new ChatOptions { Temperature = 0 });
-                
                 return JsonSerializer.Serialize(ollamaResponse);
             })
    .WithName("AI Calling - POST");
