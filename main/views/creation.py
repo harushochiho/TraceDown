@@ -1,17 +1,24 @@
+import base64
 import json
 from decimal import Decimal
+from io import BytesIO
+from os.path import splitext
+from zoneinfo import ZoneInfo
 
 from django.core.files.storage import default_storage
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render
+from django.utils import timezone
 
 from main.models import Receipt, Item, ItemList, Company, Category, Tax, OnSale
-from main.ollama.image_recognition import image_recognition, call_api_localhost
+from main.services import image_recognition
+from main.utils import ImageProcessing
 
 
 # Create your views here.
 def create_item(request):
     return render(request, "create_item.html")
+
 
 def submit_item(request):
     # Create a new object and save to the table "receipt"
@@ -60,23 +67,45 @@ def submit_item(request):
     item_list.save()
     return render(request, "create_item.html")
 
+
 def image_upload(request):
     return render(request, "image_upload.html")
 
+
 def image_recognition_req(request):
     print(request.FILES)
-    file = request.FILES['picture']
-    data = json.loads(image_recognition(file).message.content)
-    save_receipt_from_json(data, request)
+    file = request.FILES.get('picture')
+    if not file:
+        return HttpResponseBadRequest("No file uploaded.")
+
+    # Read image from the uploaded file
+    receipt_img = file.read()
+
+    # Create an instance of ImageProcessing and process the image
+    image_processing = ImageProcessing()
+    image_processing.process_image(BytesIO(receipt_img))
+
+    # timezone.activate(ZoneInfo("America/Toronto"))
+    # folder_name = f"{splitext(file.name)[0]}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+    # default_storage.save(f'receipts/{folder_name}/test-origin_{file.name}', image_processing.get_origin_image_bytes())
+    # default_storage.save(f'receipts/{folder_name}/test-transformed_{file.name}', image_processing.get_transformed_image_bytes())
+
+    image_encoded = base64.b64encode(image_processing.get_transformed_image_bytes().getvalue()).decode("utf-8")
+    data = json.loads(image_recognition(image_encoded).message.content)
+    save_receipt_from_json(data, {'origin': image_processing.get_origin_image_bytes(),
+                                  'transformed': image_processing.get_transformed_image_bytes(), 'name': file.name})
     # data = call_api_localhost(file)
     return JsonResponse(data)
 
-def save_receipt_from_json(data, request):
+
+def save_receipt_from_json(data, images: {'origin': BytesIO, 'transformed': BytesIO, 'name': str}):
     # Create a new object and save to the table "receipt"
     receipt_obj, _ = Receipt.objects.get_or_create(name=data['CompanyName'])
-    if request.FILES:
-        image_file = request.FILES['picture']
-        filename = default_storage.save(f'receipts/{image_file.name}', image_file)
+    if images:
+        timezone.activate(ZoneInfo("America/Toronto"))
+        folder_name = f"{splitext(images['name'])[0]}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+        filename = default_storage.save(f'receipts/{folder_name}/origin_{images['name']}', images['origin'])
+        default_storage.save(f'receipts/{folder_name}/transformed_{images['name']}', images['transformed'])
         receipt_obj.picture = filename
     receipt_obj.save()
 

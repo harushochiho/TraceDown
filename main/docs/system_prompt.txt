@@ -17,7 +17,7 @@ For example: 7499.00, not 7.499,00 or 7,499.00.
     
 
 When price is like '4.99H', meaning the item is taxable. Otherwise, the item is not taxable.
-'White Potatoes (白薯仔) <ON SALE>' means the item White Potatoes (白薯仔) is on sale.
+'White Potatoes (白薯仔) <ON SALE>' or '特價' means the item White Potatoes (白薯仔) is on sale.
 While extracting the item name, make sure not to include the words '<ON SALE>'.
 '0.58 lb @ $1.29/lb' means the quantity of this item is 0.58 lb and its unit price is 1.29 per lb.
 The item name under English item name is the Chinese item name.
