@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 from django.core.files.storage import default_storage
 from django.http import JsonResponse, HttpResponseBadRequest
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils import timezone
 
 from main.models import Receipt, Item, ItemList, Company, Category, Tax, OnSale
@@ -94,8 +94,8 @@ def image_recognition_req(request):
     data = json.loads(image_recognition(image_encoded).message.content)
     save_receipt_from_json(data, {'origin': image_processing.get_origin_image_bytes(),
                                   'transformed': image_processing.get_transformed_image_bytes(), 'name': file.name})
-    # data = call_api_localhost(file)
-    return JsonResponse(data)
+    
+    return redirect('records/')
 
 
 def save_receipt_from_json(data, images: {'origin': BytesIO, 'transformed': BytesIO, 'name': str}):

@@ -9,7 +9,6 @@ from django.conf import settings
 from django.utils import timezone
 from httpx import Timeout
 from ollama import ChatResponse, Client
-from sqlparse.sql import If
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 file_path = BASE_DIR / "docs"
