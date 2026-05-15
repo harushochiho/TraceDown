@@ -1,1 +1,2 @@
-Respond in JSON format with this structure:{"CompanyName":"Company Name","items": [{ "name": "English item name(Chinese item name)", "quantity": 1.500, "unitPrice": 0.00, "totalPrice": 0.00, "Category": "category", "OnSale":(true/false), "Taxable":(true/false) }],  "subtotal": 0.00, "Tax": 0.00, "TotalAfterTaxes":0.00 }
+Respond in JSON format.
+I only want the valid JSON data, do not include any explanations or additional text.

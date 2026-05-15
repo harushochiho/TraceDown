@@ -60,7 +60,7 @@ def retrieval(request):
         new_item["category_name"] = item_receipt.get("category_name")
         new_item["tax"] = item_receipt.get("tax")
         new_item["on_sale"] = item_receipt.get("on_sale")
-        print(f"price: {item_receipt}, quantity: {new_item['quantity']}")
+        #print(f"price: {item_receipt}, quantity: {new_item['quantity']}")
         receipts_grouped[item_receipt.get("id")]["items"].append(new_item)
 
     return render(request, "read_items.html", {"receipts": receipts_grouped})

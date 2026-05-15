@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+from hmac import new
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -10,68 +11,89 @@ from django.utils import timezone
 from httpx import Timeout
 from ollama import ChatResponse, Client
 
+from main.utils import FilesProcessing
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 file_path = BASE_DIR / "docs"
 
-deepseek_prompt = ""
-llama_prompt = ""
-system_message = ""
-with open(f"{file_path}/deepseek_prompt.txt", "r", encoding="utf-8") as file:
-    print("Reading deepseek_prompt.txt")
-    deepseek_prompt = file.read()
 
-with open(f"{file_path}/llama_prompt.txt", "r", encoding="utf-8") as file:
-    print("Reading llama_prompt.txt")
-    llama_prompt = file.read()
+def image_recognition(image_encoded) -> str:
+    file_readings = FilesProcessing();
 
-with open(f"{file_path}/system_prompt.txt", "r", encoding="utf-8") as file:
-    print("Reading system_prompt.txt")
-    system_message = file.read()
+    file_readings.read_files(
+        [f"{file_path}/deepseek_prompt.txt", f"{file_path}/llama_prompt.txt", f"{file_path}/system_prompt.txt"])
 
+    [deepseek_prompt, llama_prompt, system_message] = file_readings.get_contents()
 
-def image_recognition(image_encoded):
-    docker_running = os.getenv("docker_running", "False").lower() == "true"
+    docker_running = os.getenv("DOCKER_RUNNING", "False").lower() == "true"
 
     ollama_host = os.getenv("OLLAMA_IN") if docker_running else os.getenv("OLLAMA_OUT")
 
     if not ollama_host:
         ollama_host = getattr(settings, "OLLAMA_IN") if docker_running else getattr(settings, "OLLAMA_OUT")
 
-    print(f"docker_running: {docker_running}, ollama_host: {ollama_host}")
+    print(f"DOCKER_RUNNING: {docker_running}, ollama_host: {ollama_host}")
     timezone.activate(ZoneInfo("America/Toronto"))
     ollama_client = Client(ollama_host, timeout=httpx.Timeout(900.0))
-    print(f"Ollama host: {ollama_host}")
     # Call the DeepSeek API to get the image description
     deepseek_messages = [{'role': 'user', 'content': deepseek_prompt, 'images': [image_encoded]}]
     deepseek_response: ChatResponse = ollama_client.chat(model="deepseek-ocr:latest", messages=deepseek_messages)
 
-    with open(f"{file_path}/deepseek_response.txt", "a", encoding="utf-8") as file:
-        print(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")} Logging deepseek_response.txt")
-        file.write(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")}-{deepseek_response.model_dump_json()}\n")
+    # with open(f"{file_path}/deepseek_response.txt", "a", encoding="utf-8") as file:
+    #     print(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")} Logging deepseek_response.txt")
+    #     file.write(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")}-{deepseek_response.model_dump_json()}\n")
+
+    FilesProcessing.write_files(
+        path=f"{file_path}/deepseek_response.txt", content=deepseek_response.model_dump_json(),
+        time=timezone.localtime().strftime("%Y-%m-%d %H:%M:%S"), line_end="\n")
 
     ollama_client.close()
 
     llama_client = Client(ollama_host, timeout=httpx.Timeout(900.0))
 
-    llama_prompt_messages = [{'role': 'user', 'content': system_message},
-                             {'role': 'assistant', 'content': deepseek_response.message.content,
-                              'images': [image_encoded]},
+    FilesProcessing.write_files(path=f"{file_path}/processed_markdown.txt",
+                                content=deepseek_response.message.content.replace("\n", ""),
+                                time=timezone.localtime().strftime("%Y-%m-%d %H:%M:%S"), line_end="\n")
+
+    llama_prompt_messages = [{'role': 'assistant', 'content': system_message},
+                             {'role': 'assistant', 'content': deepseek_response.message.content.replace("\n", ""),
+                              # 'images': [image_encoded]
+                              },
                              {'role': 'user', 'content': f"{llama_prompt}"}]
+
     llama_response: ChatResponse = llama_client.chat(model='llama3.2-vision:latest', messages=llama_prompt_messages)
 
-    with open(f"{file_path}/llama_response.txt", "a", encoding="utf-8") as file:
-        print(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")} Logging llama_response.txt")
-        file.write(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")}-{llama_response.model_dump_json()}\n")
+    # with open(f"{file_path}/llama_response.txt", "a", encoding="utf-8") as file:
+    #     print(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")} Logging llama_response.txt")
+    #     file.write(f"{timezone.localtime().strftime("%Y-%m-%d %H:%M:%S")}-{llama_response.model_dump_json()}\n")
+    FilesProcessing.write_files(
+        path=f"{file_path}/llama_response.txt", content=llama_response.model_dump_json(),
+        time=timezone.localtime().strftime("%Y-%m-%d %H:%M:%S"), line_end="\n")
 
     llama_client.close()
+    
+    if not llama_response.message.content:
+        raise ValueError("AI response is empty.")
+    
+    prefix_index = llama_response.message.content.find("{")
+    suffix_index = llama_response.message.content.rfind("}")
 
-    return llama_response
+    result = llama_response.message.content[prefix_index:suffix_index + 1] if prefix_index != -1 and suffix_index != -1 else llama_response.message.content
+
+    return result
 
 
 def call_api_localhost(image):
     timezone.activate(ZoneInfo("America/Toronto"))
     image_data = base64.b64encode(image.read()).decode('utf-8')
     media_type = getattr(image, 'content_type', 'image/png')
+
+    file_readings = FilesProcessing();
+
+    file_readings.read_files([f"{file_path}/deepseek_prompt.txt"])
+
+    [deepseek_prompt] = file_readings.get_contents()
+
     messages = {
         "ModelName": "deepseek-ocr:latest",
         "Prompts": [

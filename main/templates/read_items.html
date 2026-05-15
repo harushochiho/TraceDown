@@ -62,7 +62,7 @@
 <h1>Receipts</h1>
 {% for receipt_id, item_list in receipts.items %}
     <table>
-        <caption>Receipt: {{ item_list.name }}</caption>
+        <caption>Receipt: {{ item_list.name }} ({{ item_list.shopping_date }})</caption>
         <thead>
         <tr>
             <th>#</th>
@@ -74,7 +74,6 @@
             <th>Category</th>
             <th>Company</th>
             <th>Remarks</th>
-            <th>Shopping Date</th>
             <th>Receipt Picture</th>
             <th></th>
         </tr>
@@ -92,7 +91,6 @@
                 <td>{{ item.category_name }}</td>
                 <td>{{ item.company_name }}</td>
                 <td>{{ item.remarks }}</td>
-                <td>{{ item_list.shopping_date }}</td>
                 <td><img src="/media/{{ item_list.picture }}" alt="{{ item_list.name }}" width="100" height="100"></td>
                 <td>
                     <button type="button" class="edit-button" 

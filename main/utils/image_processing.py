@@ -51,6 +51,6 @@ class ImageProcessing:
 
         #img = np.array(transformed_image, dtype=np.uint8)
         #blur = cv2.GaussianBlur(img, (3, 3), 0)
-        #binary = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 8)
+        #transformed_image = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 8)
         
         return transformed_image

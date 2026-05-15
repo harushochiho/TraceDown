@@ -3,6 +3,7 @@ import json
 from decimal import Decimal
 from io import BytesIO
 from os.path import splitext
+from unittest import result
 from zoneinfo import ZoneInfo
 
 from django.core.files.storage import default_storage
@@ -91,16 +92,23 @@ def image_recognition_req(request):
     # default_storage.save(f'receipts/{folder_name}/test-transformed_{file.name}', image_processing.get_transformed_image_bytes())
 
     image_encoded = base64.b64encode(image_processing.get_transformed_image_bytes().getvalue()).decode("utf-8")
-    data = json.loads(image_recognition(image_encoded).message.content)
-    save_receipt_from_json(data, {'origin': image_processing.get_origin_image_bytes(),
+    
+    try:
+        ai_res = image_recognition(image_encoded)
+    
+        data = json.loads(ai_res)
+    
+        save_receipt_from_json(data, {'origin': image_processing.get_origin_image_bytes(),
                                   'transformed': image_processing.get_transformed_image_bytes(), 'name': file.name})
     
-    return redirect('records/')
+        return redirect('retrieval')
+    except Exception as e:
+        return JsonResponse({'error': str(e)})
 
 
 def save_receipt_from_json(data, images: {'origin': BytesIO, 'transformed': BytesIO, 'name': str}):
     # Create a new object and save to the table "receipt"
-    receipt_obj, _ = Receipt.objects.get_or_create(name=data['CompanyName'])
+    receipt_obj, _ = Receipt.objects.get_or_create(name=data['CompanyName'], shopping_date=data['Date'])
     if images:
         timezone.activate(ZoneInfo("America/Toronto"))
         folder_name = f"{splitext(images['name'])[0]}-{timezone.now().strftime('%Y%m%d%H%M%S')}"

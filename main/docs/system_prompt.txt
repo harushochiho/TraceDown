@@ -14,12 +14,18 @@ DECIMAL FORMAT: Receipts may use different number formats depending on locale.
 First, detect which format the receipt uses by examining the numbers on it.
 Then, always output numbers in the JSON using a period as the decimal separator.
 For example: 7499.00, not 7.499,00 or 7,499.00.
-    
+
+DATE FORMAT: Receipts might use different date formats depending on locales. 
+For example, 'MM/DD/YYYY', 'DD/MM/YYYY' or 'YYYY/MM/DD'. 
+Detect the date format used in the receipt and extract the date accordingly.
+Always output the date in ISO format: YYYY-MM-DD.
+
+JSON FORMAT: Output the extracted data in the following JSON format:
+{"Date":"YYYY-MM-DD", "CompanyName":"Company Name", "items": [{ "name": "English item name(Chinese item name)", "quantity": 1.500, "unitPrice": 0.00, "totalPrice": 0.00, "Category": "category", "OnSale":(true/false), "Taxable":(true/false) }],  "subtotal": 0.00, "Tax": 0.00, "TotalAfterTaxes":0.00 }
 
 When price is like '4.99H', meaning the item is taxable. Otherwise, the item is not taxable.
 'White Potatoes (白薯仔) <ON SALE>' or '特價' means the item White Potatoes (白薯仔) is on sale.
 While extracting the item name, make sure not to include the words '<ON SALE>'.
 '0.58 lb @ $1.29/lb' means the quantity of this item is 0.58 lb and its unit price is 1.29 per lb.
 The item name under English item name is the Chinese item name.
-    
-Make sure the data extracted from image are matched with the data I provided.
+
