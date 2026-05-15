@@ -10,6 +10,7 @@ media
 /main/docs/deepseek_response.txt
 /main/docs/llama_response.txt
 /main/docs/processed_markdown.txt
+/main/docs/api_calling.txt
 myenv/
 myenv
 main/docs/receipt_samples

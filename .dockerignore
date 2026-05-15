@@ -1,7 +1,9 @@
 media/receipts/*
 myenv
-main/docs/deepseek_response.txt
-main/docs/llama_response.txt
+/main/docs/deepseek_response.txt
+/main/docs/llama_response.txt
+/main/docs/processed_markdown.txt
+/main/docs/api_calling.txt
 
 ### Example user template template
 ### Example user template

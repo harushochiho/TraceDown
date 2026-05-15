@@ -127,5 +127,5 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Ollama settings
-OLLAMA_IN = 'http://ollama:11434'
-OLLAMA_OUT = 'http://localhost:8833'
+AI_CALLING_IN = 'http://ollama:11434'
+AI_CALLING_OUT = 'http://localhost:8833'
