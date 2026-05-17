@@ -10,9 +10,11 @@ from django.core.files.storage import default_storage
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.utils import timezone
+from google.genai import types
+from pydantic import config
 
 from main.models import Receipt, Item, ItemList, Company, Category, Tax, OnSale
-from main.services import image_recognition
+from main.services import image_recognition, gemini
 from main.utils import ImageProcessing
 
 
@@ -86,17 +88,17 @@ def image_recognition_req(request):
     image_processing = ImageProcessing()
     image_processing.process_image(BytesIO(receipt_img))
 
-    # timezone.activate(ZoneInfo("America/Toronto"))
-    # folder_name = f"{splitext(file.name)[0]}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
-    # default_storage.save(f'receipts/{folder_name}/test-origin_{file.name}', image_processing.get_origin_image_bytes())
-    # default_storage.save(f'receipts/{folder_name}/test-transformed_{file.name}', image_processing.get_transformed_image_bytes())
-
-    image_encoded = base64.b64encode(image_processing.get_transformed_image_bytes().getvalue()).decode("utf-8")
+    # image_encoded = base64.b64encode(image_processing.get_transformed_image_bytes().getvalue()).decode("utf-8")
     
     try:
-        ai_res = image_recognition(image_encoded)
-    
-        data = json.loads(ai_res)
+        # ai_res = image_recognition(image_encoded)
+        gemini_ai = gemini.GeminiAI()
+        
+        response_config = types.GenerateContentConfig(response_mime_type="application/json")
+        
+        ai_res = gemini_ai.get_json_data(image_processing.get_transformed_image_bytes().getvalue(), config=response_config)
+        
+        data = json.loads(ai_res.text)
     
         save_receipt_from_json(data, {'origin': image_processing.get_origin_image_bytes(),
                                   'transformed': image_processing.get_transformed_image_bytes(), 'name': file.name})
@@ -108,7 +110,7 @@ def image_recognition_req(request):
 
 def save_receipt_from_json(data, images: {'origin': BytesIO, 'transformed': BytesIO, 'name': str}):
     # Create a new object and save to the table "receipt"
-    receipt_obj, _ = Receipt.objects.get_or_create(name=data['CompanyName'], shopping_date=data['Date'])
+    receipt_obj = Receipt(name=data['CompanyName'], shopping_date=data["Date"], subtotal=Decimal(data["SubTotal"]), taxes=data["Tax"], total=data["TotalAfterTaxes"])
     if images:
         timezone.activate(ZoneInfo("America/Toronto"))
         folder_name = f"{splitext(images['name'])[0]}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
@@ -122,11 +124,11 @@ def save_receipt_from_json(data, images: {'origin': BytesIO, 'transformed': Byte
     # False: create a new one and save to the table "company"
     company_obj, _ = Company.objects.get_or_create(company_name=data['CompanyName'])
 
-    for item in data['items']:
+    for item in data['Items']:
         # Check if the item name exists
         # True: use existing item name
         # False: create a new one and save to the table "item"
-        item_obj, _ = Item.objects.get_or_create(name=item['name'])
+        item_obj, _ = Item.objects.get_or_create(name=item['Name'])
 
         # Check if the category name exists
         # True: use existing category name
@@ -138,8 +140,8 @@ def save_receipt_from_json(data, images: {'origin': BytesIO, 'transformed': Byte
 
         item_list = ItemList(
             item=item_obj,
-            price=Decimal(item['totalPrice']),
-            quantity=Decimal(item['quantity']),
+            price=Decimal(item['TotalPrice']),
+            quantity=Decimal(item['Quantity']),
             category=category_obj,
             company=company_obj,
             is_taxed=is_taxed,

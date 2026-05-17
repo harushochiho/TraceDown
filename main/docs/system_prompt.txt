@@ -21,7 +21,7 @@ Detect the date format used in the receipt and extract the date accordingly.
 Always output the date in ISO format: YYYY-MM-DD.
 
 JSON FORMAT: Output the extracted data in the following JSON format:
-{"Date":"YYYY-MM-DD", "CompanyName":"Company Name", "items": [{ "name": "English item name(Chinese item name)", "quantity": 1.500, "unitPrice": 0.00, "totalPrice": 0.00, "Category": "category", "OnSale":(true/false), "Taxable":(true/false) }],  "subtotal": 0.00, "Tax": 0.00, "TotalAfterTaxes":0.00 }
+{"Date":"YYYY-MM-DD HH:MM:SS", "CompanyName":"Company Name", "Items": [{ "Name": "English item name(Chinese item name)", "Quantity": 1.500, "UnitPrice": 0.00, "TotalPrice": 0.00, "Category": "category", "OnSale":(true/false), "Taxable":(true/false) }],  "SubTotal": 0.00, "Tax": 0.00, "TotalAfterTaxes":0.00 }
 
 When price is like '4.99H', meaning the item is taxable. Otherwise, the item is not taxable.
 'White Potatoes (白薯仔) <ON SALE>' or '特價' means the item White Potatoes (白薯仔) is on sale.
@@ -29,3 +29,5 @@ While extracting the item name, make sure not to include the words '<ON SALE>'.
 '0.58 lb @ $1.29/lb' means the quantity of this item is 0.58 lb and its unit price is 1.29 per lb.
 The item name under English item name is the Chinese item name.
 
+Ensure the items extracted from the image are as accurate as possible and do not invent items that aren't on the receipt.
+Ensure the items from the image are consistent with the data I provided.

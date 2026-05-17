@@ -33,10 +33,10 @@ def retrieval(request):
                                                                                          "item_list__is_taxed__is_taxed"),
                                                                                      on_sale=F(
                                                                                          "item_list__is_on_sale__is_on_sale")).order_by(
-        "-id").values(
+        "-created_at", "-shopping_date", "name").values(
         "id", "name", "item_list_id", "shopping_date", "item_name", "price", "quantity",
         "remarks", "company_name", "category_name", "tax",
-        "on_sale", "picture")
+        "on_sale", "picture", "created_at", "subtotal", "taxes", "total")
     receipts_grouped = {}
 
     for item_receipt in temp_all_receipts:
@@ -47,6 +47,10 @@ def retrieval(request):
             current_receipt["picture"] = item_receipt.get("picture")
             current_receipt["name"] = item_receipt.get("name")
             current_receipt["shopping_date"] = item_receipt.get("shopping_date")
+            current_receipt["subtotal"] = item_receipt.get("subtotal")
+            current_receipt["taxes"] = item_receipt.get("taxes")
+            current_receipt["total"] = item_receipt["total"]
+            current_receipt["created_at"] = item_receipt.get("created_at")
             current_receipt["items"] = []
             receipts_grouped[item_receipt.get("id")] = current_receipt
 
