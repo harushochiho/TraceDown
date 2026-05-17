@@ -11,6 +11,7 @@ media
 /main/docs/llama_response.txt
 /main/docs/processed_markdown.txt
 /main/docs/api_calling.txt
+/main/docs/gemini_response.txt
 myenv/
 myenv
 main/docs/receipt_samples
