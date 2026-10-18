@@ -1,3 +1,6 @@
+from gc import is_finalized
+from logging import setLogRecordFactory
+
 from django.db import models
 
 from main.models.on_sale import OnSale
@@ -13,6 +16,7 @@ class ItemList(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='item_list')
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
     is_taxed = models.ForeignKey(Tax, on_delete=models.SET_NULL, related_name='item_list', null=True)
     is_on_sale = models.ForeignKey(OnSale, on_delete=models.SET_NULL, related_name='item_list', null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, related_name='item_list', null=True)
@@ -21,4 +25,3 @@ class ItemList(models.Model):
     receipt = models.ForeignKey(Receipt, on_delete=models.SET_NULL, related_name='item_list', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    

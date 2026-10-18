@@ -1,4 +1,4 @@
 from .creation import  create_item, submit_item, image_upload, image_recognition_req
-from .retrieval import retrieval
+from .retrieval import retrieval, export_receipts
 from .deletion import  delete_item
 from .update import  update_item

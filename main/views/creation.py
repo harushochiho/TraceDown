@@ -1,9 +1,10 @@
-import base64
+#import base64
 import json
+import traceback
 from decimal import Decimal
 from io import BytesIO
 from os.path import splitext
-from unittest import result
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from django.core.files.storage import default_storage
@@ -11,11 +12,10 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from google.genai import types
-from pydantic import config
 
 from main.models import Receipt, Item, ItemList, Company, Category, Tax, OnSale
-from main.services import image_recognition, gemini
-from main.utils import ImageProcessing
+from main.services import gemini
+from main.utils import ImageProcessing, FilesProcessing
 
 
 # Create your views here.
@@ -60,6 +60,7 @@ def submit_item(request):
         item=item_obj,
         price=Decimal(request.POST["price"]),
         quantity=Decimal(request.POST["quantity"]),
+        total=Decimal(request.POST["total"]),
         category=category_obj,
         company=company_obj,
         is_taxed=is_taxed,
@@ -82,6 +83,7 @@ def image_recognition_req(request):
         return HttpResponseBadRequest("No file uploaded.")
 
     # Read image from the uploaded file
+    file.seek(0)
     receipt_img = file.read()
 
     # Create an instance of ImageProcessing and process the image
@@ -89,28 +91,34 @@ def image_recognition_req(request):
     image_processing.process_image(BytesIO(receipt_img))
 
     # image_encoded = base64.b64encode(image_processing.get_transformed_image_bytes().getvalue()).decode("utf-8")
-    
+
     try:
         # ai_res = image_recognition(image_encoded)
         gemini_ai = gemini.GeminiAI()
-        
+
         response_config = types.GenerateContentConfig(response_mime_type="application/json")
-        
-        ai_res = gemini_ai.get_json_data(image_processing.get_transformed_image_bytes().getvalue(), config=response_config)
-        
+        mime_type = getattr(file, "content_type", None)
+        if not mime_type:
+            raise ValueError("Failed to read the file type.")
+
+        ai_res = gemini_ai.get_json_data(image_processing.get_transformed_image_bytes().getvalue(), mime_type=mime_type,
+                                         config=response_config)
+
         data = json.loads(ai_res.text)
-    
+
         save_receipt_from_json(data, {'origin': image_processing.get_origin_image_bytes(),
-                                  'transformed': image_processing.get_transformed_image_bytes(), 'name': file.name})
-    
+                                      'transformed': image_processing.get_transformed_image_bytes(), 'name': file.name})
+
         return redirect('retrieval')
     except Exception as e:
-        return JsonResponse({'error': str(e)})
+        return JsonResponse({'error': str(e), 'type': type(e).__name__, 'traceback': traceback.format_exc()})
 
 
 def save_receipt_from_json(data, images: {'origin': BytesIO, 'transformed': BytesIO, 'name': str}):
+    data_copy = data.copy()
     # Create a new object and save to the table "receipt"
-    receipt_obj = Receipt(name=data['CompanyName'], shopping_date=data["Date"], subtotal=Decimal(data["SubTotal"]), taxes=data["Tax"], total=data["TotalAfterTaxes"])
+    receipt_obj = Receipt(name=data['CompanyName'], shopping_date=data['Date'], subtotal=Decimal(data['SubTotal']),
+                          taxes=data['Tax'], total=data['TotalAfterTaxes'])
     if images:
         timezone.activate(ZoneInfo("America/Toronto"))
         folder_name = f"{splitext(images['name'])[0]}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
@@ -118,35 +126,46 @@ def save_receipt_from_json(data, images: {'origin': BytesIO, 'transformed': Byte
         default_storage.save(f'receipts/{folder_name}/transformed_{images['name']}', images['transformed'])
         receipt_obj.picture = filename
     receipt_obj.save()
+    data_copy['ReceiptID'] = receipt_obj.id
 
     # Check if the company name exists
     # True: use existing company name
     # False: create a new one and save to the table "company"
     company_obj, _ = Company.objects.get_or_create(company_name=data['CompanyName'])
+    data_copy['CompanyName'] = {'id': company_obj.id, 'company_name':company_obj.company_name}
 
-    for item in data['Items']:
+    for index, item in enumerate(data['Items']):
         # Check if the item name exists
         # True: use existing item name
         # False: create a new one and save to the table "item"
         item_obj, _ = Item.objects.get_or_create(name=item['Name'])
+        data_copy['Items'][index]['Name'] = {'id':item_obj.id, 'name': item_obj.name}
 
         # Check if the category name exists
         # True: use existing category name
         # False: create a new one and save to the table "category"
         category_obj, _ = Category.objects.get_or_create(name=item['Category'])
+        data_copy['Items'][index]['Category'] = {'id': category_obj.id, 'name': category_obj.name}
 
         is_taxed = Tax.objects.get(is_taxed=item['Taxable'])
         is_on_sale = OnSale.objects.get(is_on_sale=item['OnSale'])
 
         item_list = ItemList(
             item=item_obj,
-            price=Decimal(item['TotalPrice']),
+            price=Decimal(item['UnitPrice']),
             quantity=Decimal(item['Quantity']),
+            total_price=Decimal(item['TotalPrice']),
             category=category_obj,
             company=company_obj,
             is_taxed=is_taxed,
             is_on_sale=is_on_sale,
-            remarks='',
+            remarks=item['Remarks'],
             receipt=receipt_obj,
         )
+
         item_list.save()
+        data_copy['Items'][index]['ItemListID'] = item_list.id
+
+        FilesProcessing.write_json_file(
+            path=f"{Path(__file__).resolve().parent.parent / "docs" / "database_receipts.json"}",
+            content=data_copy)

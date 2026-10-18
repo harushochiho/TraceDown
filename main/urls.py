@@ -9,4 +9,5 @@ urlpatterns = [
     path('records/<int:item_id>/delete/', views.delete_item, name='delete_item'),
     path('image_upload/', views.image_upload, name='image_upload'),
     path('image_recognition_req/', views.image_recognition_req, name='image_recognition_req'),
+    path('export_receipts/<str:receipt_id>/<str:receipt_name>', views.export_receipts, name='export_receipts'),
 ]

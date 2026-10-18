@@ -129,28 +129,53 @@
             background: linear-gradient(180deg, #f0f4ff 0%, #e8f4f8 100%);
         }
 
+        /* Footer layout: use a single full-width cell and split it via flex so widths
+           are consistent regardless of table column calculations */
         tfoot td {
-            padding: 20px 15px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            box-sizing: border-box;
+            border: none;
+            padding: 0;
         }
 
-        tfoot td:first-child {
-            text-align: left;
+        .summary-container {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            padding: 18px 20px;
+        }
+
+        .summary-left {
+            flex: 0 0 72.7273%; /* 8/11 columns */
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-color: #667eea;
-            font-weight: 600;
-            font-size: 16px;
-            padding: 20px 20px;
+            padding: 18px 20px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
+            font-weight: 600;
+            font-size: 16px;
         }
 
-        tfoot td:last-child {
-            padding: 20px 20px;
-            text-align: right;
+        .summary-right {
+            flex: 0 0 27.2727%; /* 3/11 columns */
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 12px 16px;
+            border-radius: 6px;
+            border: 1px solid #e6e6e6;
+        }
+
+        .summary-right .summary-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-right .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-right .summary-item.total-row {
+            border-top: 2px solid #667eea;
+            padding-top: 10px;
+            margin-top: 6px;
         }
 
         .summary-label {
@@ -318,99 +343,118 @@
 {% for receipt_id, item_list in receipts.items %}
     <div class="table-wrapper">
         <table>
-        <caption>
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <span style="font-size: 20px;">📄 {{ item_list.name }}</span>
-                <div class="receipt-info">
-                    <div class="receipt-info-item">
-                        <span class="receipt-info-label">📅 Shopping Date:</span>
-                        <span class="receipt-info-value">{{ item_list.shopping_date|date:'Y-m-d H:i' }}</span>
-                    </div>
-                    <div class="receipt-info-item">
-                        <span class="receipt-info-label">⏰ Created At:</span>
-                        <span class="receipt-info-value">{{ item_list.created_at|date:'Y-m-d H:i' }}</span>
+            <caption>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span style="font-size: 20px;">📄 {{ item_list.name }}</span>
+                    <div class="receipt-info">
+                        <div class="receipt-info-item">
+                            <span class="receipt-info-label">📅 Shopping Date:</span>
+                            <span class="receipt-info-value">{{ item_list.shopping_date|date:'Y-m-d H:i' }}</span>
+                        </div>
+                        <div class="receipt-info-item">
+                            <span class="receipt-info-label">⏰ Created At:</span>
+                            <span class="receipt-info-value">{{ item_list.created_at|date:'Y-m-d H:i' }}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </caption>
-        <thead>
-        <tr>
-            <th>#</th>
-            <th>Item name</th>
-            <th>Price</th>
-            <th>Quantity</th>
-            <th>Tax?</th>
-            <th>On sale?</th>
-            <th>Category</th>
-            <th>Company</th>
-            <th>Remarks</th>
-            <th>Receipt Picture</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-
-        {% for item in item_list.items %}
+            </caption>
+            <thead>
             <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.price }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.tax|yesno:"Yes,No" }}</td>
-                <td>{{ item.on_sale|yesno:"Yes,No" }}</td>
-                <td>{{ item.category_name }}</td>
-                <td>{{ item.company_name }}</td>
-                <td>{{ item.remarks }}</td>
-                <td><img src="/media/{{ item_list.picture }}" alt="{{ item_list.name }}" width="100" height="100"></td>
+                <th>#</th>
+                <th>Item name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Tax?</th>
+                <th>On sale?</th>
+                <th>Category</th>
+                <th>Company</th>
+                <th>Total</th>
+                <th>Remarks</th>
+                <th>Receipt Picture</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+
+            {% for item in item_list.items %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.price }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.tax|yesno:"Yes,No" }}</td>
+                    <td>{{ item.on_sale|yesno:"Yes,No" }}</td>
+                    <td>{{ item.category_name }}</td>
+                    <td>{{ item.company_name }}</td>
+                    <td>{{ item.total_price }}</td>
+                    <td>{{ item.remarks }}</td>
+                    <td><img src="/media/{{ item_list.picture }}" alt="{{ item_list.name }}" width="100" height="100">
+                    </td>
+                    <td>
+                        <button type="button" class="edit-button"
+                                data-item-id="{{ item.id }}"
+                                data-receipt-id="{{ receipt_id }}"
+                                data-item-name="{{ item.name }}"
+                                data-price="{{ item.price }}"
+                                data-quantity="{{ item.quantity }}"
+                                data-tax="{{ item.tax }}"
+                                data-on-sale="{{ item.on_sale }}"
+                                data-category="{{ item.category_name }}"
+                                data-company="{{ item.company_name }}"
+                                data-remarks="{{ item.remarks }}"
+                                data-total="{{ item.total_price }}"
+                                data-receipt-name="{{ item_list.name }}"
+                                data-shopping-date="{{ item_list.shopping_date|date:'Y-m-d' }}"
+                                data-picture="{{ item_list.picture }}"
+                                onclick="handleEditClick(this)">
+                            Edit
+                        </button>
+                        <form method="post" action="{% url 'delete_item' item_id=item.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="delete-button"
+                                    onclick="return confirm('Are you sure you want to delete this item?');">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="11">
+                    <div class="summary-container">
+                        <div class="summary-left">📊 Summary</div>
+                        <div class="summary-right">
+                            <div class="summary-item">
+                                <span class="summary-label">Subtotal:</span>
+                                <span class="summary-value">${{ item_list.subtotal }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Taxes:</span>
+                                <span class="summary-value">${{ item_list.taxes }}</span>
+                            </div>
+                            <div class="summary-item total-row">
+                                <span class="summary-label">Total:</span>
+                                <span class="summary-value">${{ item_list.total }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </td>
                 <td>
-                    <button type="button" class="edit-button" 
-                            data-item-id="{{ item.id }}"
-                            data-receipt-id="{{ receipt_id }}"
-                            data-item-name="{{ item.name }}"
-                            data-price="{{ item.price }}"
-                            data-quantity="{{ item.quantity }}"
-                            data-tax="{{ item.tax }}"
-                            data-on-sale="{{ item.on_sale }}"
-                            data-category="{{ item.category_name }}"
-                            data-company="{{ item.company_name }}"
-                            data-remarks="{{ item.remarks }}"
-                            data-receipt-name="{{ item_list.name }}"
-                            data-shopping-date="{{ item_list.shopping_date|date:'Y-m-d' }}"
-                            data-picture="{{ item_list.picture }}"
-                            onclick="handleEditClick(this)">
-                        Edit
-                    </button>
-                    <form method="post" action="{% url 'delete_item' item_id=item.id %}" style="display:inline;">
+                    <form method="post"
+                          action="{% url 'export_receipts' receipt_id=receipt_id receipt_name=item_list.name %}"
+                          style="display:block;width: 100%; height: 100%;">
                         {% csrf_token %}
-                        <button type="submit" class="delete-button"
-                                onclick="return confirm('Are you sure you want to delete this item?');">
-                            Delete
+                        <input type="hidden" name="receipt_path" value="{{ item_list.picture }}">
+                        <button type="submit" class="edit-button" style="display:block;width: 100%; height: 100%;">
+                            Export
                         </button>
                     </form>
                 </td>
             </tr>
-        {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="8" class="summary-label">📊 Summary</td>
-                <td colspan="3">
-                    <div class="summary-item">
-                        <span class="summary-label">Subtotal:</span>
-                        <span class="summary-value">${{ item_list.subtotal }}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Taxes:</span>
-                        <span class="summary-value">${{ item_list.taxes }}</span>
-                    </div>
-                    <div class="summary-item total-row">
-                        <span class="summary-label">Total:</span>
-                        <span class="summary-value">${{ item_list.total }}</span>
-                    </div>
-                </td>
-            </tr>
-        </tfoot>
-    </table>
+            </tfoot>
+        </table>
     </div>
 {% empty %}
     <div class="table-wrapper">
@@ -444,12 +488,13 @@
             on_sale: button.dataset.onSale === 'True' || button.dataset.onSale === 'true',
             category_name: button.dataset.category,
             company_name: button.dataset.company,
+            total_price: button.dataset.total,
             remarks: button.dataset.remarks,
             receipt_name: button.dataset.receiptName,
             shopping_date: button.dataset.shoppingDate,
             picture: button.dataset.picture
         };
-        
+
         // Call openEditModal with the data
         openEditModal(itemData.item_id, itemData.receipt_id, itemData);
     }
@@ -460,7 +505,7 @@
             // Populate receipt information
             document.getElementById('id_receipt_name').value = itemData.receipt_name || '';
             document.getElementById('id_shopping_date').value = itemData.shopping_date || '';
-            
+
             // Populate receipt picture preview
             const picturePreview = document.getElementById('picturePreview');
             if (itemData.picture) {
@@ -468,7 +513,7 @@
             } else {
                 picturePreview.innerHTML = '<p>No picture uploaded</p>';
             }
-            
+
             // Populate item information
             document.getElementById('id_item_name').value = itemData.item_name || '';
             document.getElementById('id_price').value = itemData.price || '';
@@ -477,15 +522,16 @@
             document.getElementById('id_onsale').checked = itemData.on_sale === true || itemData.on_sale === 'True' || itemData.on_sale === 'true';
             document.getElementById('id_category').value = itemData.category_name || '';
             document.getElementById('id_company').value = itemData.company_name || '';
+            document.getElementById('id_total').value = itemData.total_price || '';
             document.getElementById('id_remarks').value = itemData.remarks || '';
-            
+
             // Store item ID in hidden field
             document.getElementById('id_item_id').value = itemId;
-            
+
             // Update form action with correct item ID
             const form = document.getElementById('editItemForm');
             form.action = `/update_item/${itemId}/`;
-            
+
             // Display modal
             modal.style.display = 'block';
             console.log('Edit modal opened for item:', itemId, 'with data:', itemData);
@@ -500,7 +546,7 @@
     }
 
     // Close modal when clicking outside of it
-    window.onclick = function(event) {
+    window.onclick = function (event) {
         const modal = document.querySelector('.edit-item-modal');
         if (modal && event.target === modal) {
             closeEditModal();

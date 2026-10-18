@@ -1,10 +1,7 @@
-import json
-from pprint import pprint
-
-from django.db.models import F
+from django.db.models import F, Case, When, CharField, Value
 from django.shortcuts import render
 
-from main.models import ItemList, Receipt
+from main.models import Receipt
 
 
 def retrieval(request):
@@ -29,13 +26,15 @@ def retrieval(request):
                                                                                          "item_list__category__name"),
                                                                                      company_name=F(
                                                                                          "item_list__company__company_name"),
+                                                                                     total_price=F(
+                                                                                         "item_list__total_price"),
                                                                                      tax=F(
                                                                                          "item_list__is_taxed__is_taxed"),
                                                                                      on_sale=F(
                                                                                          "item_list__is_on_sale__is_on_sale")).order_by(
         "-created_at", "-shopping_date", "name").values(
         "id", "name", "item_list_id", "shopping_date", "item_name", "price", "quantity",
-        "remarks", "company_name", "category_name", "tax",
+        "remarks", "company_name", "category_name", "total_price", "tax",
         "on_sale", "picture", "created_at", "subtotal", "taxes", "total")
     receipts_grouped = {}
 
@@ -62,9 +61,47 @@ def retrieval(request):
         new_item["remarks"] = item_receipt.get("remarks")
         new_item["company_name"] = item_receipt.get("company_name")
         new_item["category_name"] = item_receipt.get("category_name")
+        new_item["total_price"] = item_receipt.get("total_price")
         new_item["tax"] = item_receipt.get("tax")
         new_item["on_sale"] = item_receipt.get("on_sale")
-        #print(f"price: {item_receipt}, quantity: {new_item['quantity']}")
+        # print(f"price: {item_receipt}, quantity: {new_item['quantity']}")
         receipts_grouped[item_receipt.get("id")]["items"].append(new_item)
 
     return render(request, "read_items.html", {"receipts": receipts_grouped})
+
+
+def export_receipts(request, receipt_id, receipt_name):
+    receipt_path = request.POST.get("receipt_path")
+    receipts = Receipt.objects.filter(item_list__id__isnull=False, id=receipt_id).annotate(
+        Items=F("item_list__item__name"),
+        Prices=F("item_list__price"),
+        Quantity=F("item_list__quantity"),
+        # --- Boolean Casts to 'Y'/'N' ---
+        Tax=Case(
+            When(item_list__is_taxed__is_taxed=True, then=Value("Y")),
+            default=Value("N"),
+            output_field=CharField(),
+        ),
+        OnSale=Case(
+            When(item_list__is_on_sale__is_on_sale=True, then=Value("Y")),
+            default=Value("N"),
+            output_field=CharField(),
+        ),
+        Category=F("item_list__category__name"),
+        Company=F("item_list__company__company_name"),
+        Total=F("item_list__total_price"),
+        Remarks=F("item_list__remarks"),
+    ).values(
+        "Items", "Prices", "Quantity", "Tax", "OnSale"
+        , "Category", "Company", "Total", "Remarks"
+    )
+
+    # Convert QuerySet to a list of dictionaries
+    receipts_data = list(receipts)
+
+    # Export to Excel
+    from main.utils.files import FilesProcessing
+    FilesProcessing.export_to_excel(data=receipts_data, file_path="excels/receipts_export.xlsx", sheet_name=receipt_name,
+                                    receipt_path=receipt_path)
+
+    return render(request, "read_items.html")
