@@ -168,7 +168,6 @@ class FilesProcessing:
             pie_chart.add_data(data_ref, titles_from_data=True)
             pie_chart.set_categories(labels_ref)
             
-            
             ws.add_chart(pie_chart, f"D{row_category_totals}")
 
             # Insert receipt image
